@@ -5,7 +5,10 @@
 package it.polito.tdp.poweroutages;
 
 import java.net.URL;
+import java.util.List;
 import java.util.ResourceBundle;
+
+import it.polito.tdp.poweroutages.model.Evento;
 import it.polito.tdp.poweroutages.model.Model;
 import it.polito.tdp.poweroutages.model.Nerc;
 import javafx.event.ActionEvent;
@@ -39,6 +42,48 @@ public class FXMLController {
     @FXML
     void doRun(ActionEvent event) {
     	txtResult.clear();
+    	
+    	int totAnni;
+    	int totOre;
+    	try {
+    		totAnni = Integer.parseInt(this.txtYears.getText());
+    		totOre = Integer.parseInt(this.txtHours.getText());
+    		
+    	} catch(NumberFormatException nfe) {
+    		this.txtResult.setText("Valori numerici non inseriti correttamente!");
+    		this.txtHours.clear();
+    		this.txtYears.clear();
+    		return;
+    	}
+    	
+    	if(totAnni>14) {
+    		this.txtResult.setText("Il numero di anni inserito supera il valore massimo considerabile per il db");
+    		this.txtYears.clear();
+    		return;
+    	}
+    	
+    	Nerc nerc = this.cmbNerc.getValue();
+    	if(nerc==null) {
+    		this.txtResult.setText("Nerc non selezionata!");
+    		this.txtHours.clear();
+    		this.txtYears.clear();
+    		return;
+    	}
+    	
+    	List<Evento> eventi = this.model.getCombinazione(totAnni, totOre, nerc);
+    	
+    	int totClientiColpiti = 0;
+    	int totOreDisagio = 0;
+    	for(Evento e : eventi) {
+    		totClientiColpiti += e.getClientiColpiti();
+    		totOreDisagio += e.getDurataDisservizio();
+    	}
+    	
+    	this.txtResult.appendText("Tot persone colpite: " + totClientiColpiti + "\n");
+    	this.txtResult.appendText("Tot ore di disagio: " + totOreDisagio + "\n");
+    	for(Evento e : eventi) 
+    		this.txtResult.appendText(e.toString()+"\n");
+    	
     }
 
     @FXML // This method is called by the FXMLLoader when initialization is complete
@@ -54,5 +99,8 @@ public class FXMLController {
     
     public void setModel(Model model) {
     	this.model = model;
+    	
+    	for(Nerc n : this.model.getNercList()) 
+    		this.cmbNerc.getItems().add(n);
     }
 }
